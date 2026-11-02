@@ -1,0 +1,12 @@
+{
+  "name": "nexus-agentic-core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Programmatic wallets for autonomous AI agents — sandboxed authorization engine and live demo.",
+  "scripts": {
+    "start": "node scripts/local-server.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}

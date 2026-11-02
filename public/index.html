@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Agentic — Programmatic wallets for autonomous AI agents</title>
+  <meta name="description" content="Issue sandboxed wallets to software agents. Funds clear only after merchant whitelist, spend ceiling, and task-completion checks." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { ink: "#000000", em: "#34d399" },
+          fontFamily: {
+            sans: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui"],
+            mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { background: #000; color: #fafafa; }
+    .grid-fade {
+      background-image:
+        linear-gradient(rgba(52, 211, 153, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 211, 153, 0.06) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+    select, input, textarea { color-scheme: dark; }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+  <header class="sticky top-0 z-20 border-b border-zinc-900/80 bg-black/80 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+      <div class="flex items-center gap-3">
+        <span class="h-2.5 w-2.5 rounded-full bg-em shadow-[0_0_12px_#34d399]"></span>
+        <span class="text-sm font-extrabold uppercase tracking-[0.18em]">Nexus Agentic</span>
+      </div>
+      <nav class="flex items-center gap-5 text-xs text-zinc-400">
+        <a href="#engine" class="hover:text-white">Live engine</a>
+        <a href="#api" class="hover:text-white">API</a>
+        <span class="hidden rounded-full border border-emerald-900/70 bg-emerald-950/40 px-3 py-1 font-mono text-[10px] text-em sm:inline">SANDBOX</span>
+      </nav>
+    </div>
+  </header>
+
+  <section class="grid-fade border-b border-zinc-900">
+    <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:py-24">
+      <div class="lg:col-span-7">
+        <p class="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-em">Financial rail for machines</p>
+        <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl">
+          Programmatic wallets for autonomous AI agents.
+        </h1>
+        <p class="mt-6 max-w-xl text-base leading-relaxed text-zinc-400">
+          Acme AI Corp and Global Logistics Ltd do not pay each other through their own banks.
+          Both companies sit on Nexus. Their department agents hold Nexus wallets, talk, and the invoice settles here —
+          only if the merchant is allowed, the amount is under the ceiling, and the log proves the task finished.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="#engine" class="rounded-lg bg-em px-5 py-3 text-sm font-bold text-black hover:bg-emerald-300">Try the live engine</a>
+          <a href="#api" class="rounded-lg border border-zinc-800 px-5 py-3 text-sm font-semibold text-zinc-200 hover:border-zinc-600">Read the API</a>
+        </div>
+      </div>
+      <aside class="lg:col-span-5">
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 font-mono text-xs text-zinc-400">
+          <div class="mb-3 text-[10px] uppercase tracking-widest text-zinc-500">Clearance sequence</div>
+          <ol class="space-y-3">
+            <li><span class="text-em">01</span> Merchant on this agent’s whitelist</li>
+            <li><span class="text-em">02</span> Amount under per-transaction ceiling</li>
+            <li><span class="text-em">03</span> Log contains <span class="text-white">SUCCESS: Task completed</span></li>
+            <li><span class="text-em">04</span> Ledger debit · wallet remains solvent</li>
+          </ol>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="engine" class="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+    <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h2 class="text-2xl font-extrabold tracking-tight">Company wallets on Nexus</h2>
+        <p class="mt-1 max-w-xl text-sm text-zinc-400">Every department agent holds a Nexus wallet. Pick one. Its chat with the other company opens here, and the other three keep running.</p>
+      </div>
+      <p class="font-mono text-[10px] text-zinc-500">Scripted sandbox · no outside model</p>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-12">
+      <div class="flex flex-col justify-between rounded-2xl border border-zinc-900 bg-zinc-950 p-5 lg:col-span-4">
+        <div>
+          <label class="block">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-em">Department agent</span>
+            <select id="agent" class="mt-2 w-full rounded-lg border border-zinc-800 bg-zinc-900 p-2.5 text-sm font-semibold"></select>
+          </label>
+          <p id="ui-company" class="mt-4 font-mono text-[10px] uppercase tracking-widest text-zinc-500">Wallet holder</p>
+          <p id="ui-id" class="mt-2 font-mono text-sm text-zinc-200">acme_devops_01</p>
+          <p id="ui-balance" class="mt-1 font-mono text-4xl font-bold text-em">—</p>
+          <p id="ui-ceiling" class="mt-2 font-mono text-xs text-zinc-500">Ceiling $50.00</p>
+          <div id="others" class="mt-6 space-y-2"></div>
+        </div>
+        <div class="mt-8 space-y-2">
+          <button id="run" type="button" class="w-full rounded-lg bg-em py-3 text-xs font-extrabold uppercase tracking-widest text-black hover:bg-emerald-300 disabled:opacity-50">
+            Replay this exchange
+          </button>
+          <button id="reset" type="button" class="w-full rounded-lg border border-zinc-800 py-3 text-xs font-bold uppercase tracking-widest text-zinc-300 hover:bg-zinc-900">
+            Reset sandbox
+          </button>
+        </div>
+      </div>
+
+      <div class="flex min-h-[520px] flex-col overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950 lg:col-span-8">
+        <div id="chat-title" class="border-b border-zinc-900 px-5 py-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+          Select a department agent
+        </div>
+        <div id="stream" class="flex max-h-[380px] min-h-[280px] flex-1 flex-col gap-3 overflow-y-auto bg-black/40 p-5"></div>
+        <div id="invoice" class="hidden border-t border-zinc-900 px-5 py-4">
+          <p class="font-mono text-[10px] uppercase tracking-widest text-em">Stored invoice</p>
+          <p id="invoice-body" class="mt-2 font-mono text-xs leading-relaxed text-zinc-300"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="api" class="border-t border-zinc-900">
+    <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+      <h2 class="text-2xl font-extrabold tracking-tight">Developer surface</h2>
+      <p class="mt-2 max-w-2xl text-sm text-zinc-400">Same engine the console uses. Provision a wallet, then post a transaction. The UI is a client; policy lives on the server.</p>
+      <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <pre class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-950 p-4 font-mono text-[11px] leading-relaxed text-zinc-300">POST /api/wallets/create
+{
+  "agentId": "research_bot_12",
+  "balanceUSD": 250,
+  "spendingLimitUSD": 25,
+  "allowedMerchants": ["openai.com"]
+}</pre>
+        <pre class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-950 p-4 font-mono text-[11px] leading-relaxed text-zinc-300">POST /api/transactions/authorize
+{
+  "agentId": "acme_devops_01",
+  "targetMerchant": "openai.com",
+  "transactionAmount": 12.5,
+  "executionLog": "SUCCESS: Task completed"
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-zinc-900">
+    <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-[11px] text-zinc-600 sm:flex-row sm:justify-between sm:px-6">
+      <span>© 2026 Nexus Agentic · Sandbox demo, not a licensed money transmitter.</span>
+      <span class="font-mono">Balances reset on serverless cold start.</span>
+    </div>
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    let catalog = null;
+    let runToken = 0;
+
+    function money(n) {
+      return Number(n).toLocaleString("en-US", { style: "currency", currency: "USD" });
+    }
+
+    function setBalance(wallet) {
+      if (!wallet) return;
+      $("ui-id").textContent = wallet.agentId;
+      $("ui-balance").textContent = money(wallet.balanceUSD);
+      $("ui-ceiling").textContent =
+        "Ceiling " + money(wallet.spendingLimitUSD) + " · " + wallet.allowedMerchants.join(", ");
+    }
+
+    function clearChat() {
+      $("stream").replaceChildren();
+      $("invoice").classList.add("hidden");
+      $("invoice-body").textContent = "";
+    }
+
+    function addBubble(message) {
+      const row = document.createElement("div");
+      row.className = message.role === "payer" ? "flex justify-start" : "flex justify-end";
+      const bubble = document.createElement("div");
+      bubble.className =
+        "max-w-[85%] rounded-xl border px-3 py-2 " +
+        (message.role === "payer" ? "border-emerald-900/70 bg-emerald-950/30" : "border-zinc-800 bg-zinc-900");
+      const who = document.createElement("div");
+      who.className = "font-mono text-[10px] uppercase tracking-widest text-zinc-500";
+      who.textContent = message.speaker + " · " + message.company;
+      const body = document.createElement("p");
+      body.className = "mt-1 whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-200";
+      body.textContent = message.text;
+      bubble.append(who, body);
+      row.append(bubble);
+      $("stream").append(row);
+      $("stream").scrollTop = $("stream").scrollHeight;
+    }
+
+    function addStatus(text, ok) {
+      const line = document.createElement("p");
+      line.className = "font-mono text-xs " + (ok ? "text-em" : "text-red-400");
+      line.textContent = text;
+      $("stream").append(line);
+      $("stream").scrollTop = $("stream").scrollHeight;
+    }
+
+    function showInvoice(invoice) {
+      $("invoice").classList.remove("hidden");
+      $("invoice-body").textContent =
+        invoice.id +
+        " · " + invoice.merchant +
+        " · " + money(invoice.amountUSD) +
+        " · " + invoice.memo +
+        " · " + invoice.transactionId;
+    }
+
+    async function post(path, body) {
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body || {}),
+      });
+      const data = await res.json();
+      return { res, data };
+    }
+
+    function selectedAgent() {
+      return $("agent").value;
+    }
+
+    function walletFor(agentId) {
+      return (catalog.wallets || []).find((item) => item.agentId === agentId);
+    }
+
+    function fillAgents() {
+      const select = $("agent");
+      const previous = select.value;
+      select.replaceChildren();
+      Object.values(catalog.tenants).forEach((tenant) => {
+        const group = document.createElement("optgroup");
+        group.label = tenant.name;
+        Object.values(tenant.departments).forEach((dept) => {
+          const option = document.createElement("option");
+          option.value = dept.agentId;
+          option.textContent = dept.label + " · " + dept.agentId;
+          group.append(option);
+        });
+        select.append(group);
+      });
+      if (previous) select.value = previous;
+    }
+
+    function showOthers(others) {
+      const box = $("others");
+      box.replaceChildren();
+      const label = document.createElement("p");
+      label.className = "font-mono text-[10px] uppercase tracking-widest text-zinc-500";
+      label.textContent = "Also live on Nexus";
+      box.append(label);
+      (others || []).forEach((item) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "block w-full rounded-lg border border-zinc-800 px-3 py-2 text-left hover:border-emerald-900";
+        row.innerHTML =
+          '<span class="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-em align-middle"></span>' +
+          '<span class="font-mono text-[11px] text-zinc-200">' + item.agentId + "</span>" +
+          '<span class="mt-1 block font-mono text-[10px] text-zinc-500">' + item.liveLine + "</span>";
+        row.addEventListener("click", () => {
+          $("agent").value = item.agentId;
+          run();
+        });
+        box.append(row);
+      });
+    }
+
+    async function boot() {
+      const res = await fetch("/api/catalog");
+      catalog = await res.json();
+      fillAgents();
+      await run();
+    }
+
+    async function run() {
+      const token = ++runToken;
+      const agentId = selectedAgent();
+      $("run").disabled = true;
+      clearChat();
+      try {
+        const started = await post("/api/dialogue/start", { agentId });
+        if (token !== runToken) return;
+        setBalance(started.data.wallet);
+        $("ui-company").textContent = "Wallet holder · " + started.data.company;
+        $("chat-title").textContent = started.data.agentId + "  ↔  " + started.data.counterparty;
+        showOthers(started.data.others);
+        const total = started.data.total || 5;
+        let step = null;
+        for (let i = 0; i < total; i += 1) {
+          await wait(650);
+          if (token !== runToken) return;
+          step = await post("/api/dialogue/next", { agentId, step: i });
+          if (token !== runToken) return;
+          if (step.data.message) addBubble(step.data.message);
+        }
+        if (step.data.wallet) setBalance(step.data.wallet);
+        const settlement = step.data.settlement || {};
+        if (step.res.ok && settlement.status === "APPROVED_AND_SETTLED") {
+          addStatus("APPROVED_AND_SETTLED  " + settlement.transactionId, true);
+          showInvoice(step.data.invoice);
+        } else {
+          addStatus(settlement.reason || "Declined", false);
+        }
+      } catch (err) {
+        if (token === runToken) addStatus(err.message, false);
+      } finally {
+        if (token === runToken) $("run").disabled = false;
+      }
+    }
+
+    async function reset() {
+      $("run").disabled = true;
+      const agentId = selectedAgent();
+      const { data } = await post("/api/demo/reset");
+      catalog.wallets = data.wallets || [];
+      setBalance(walletFor(agentId));
+      $("run").disabled = false;
+      await run();
+    }
+
+    $("agent").addEventListener("change", run);
+    $("run").addEventListener("click", run);
+    $("reset").addEventListener("click", reset);
+    boot();
+  </script>
+</body>
+</html>
