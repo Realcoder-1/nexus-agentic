@@ -15,7 +15,7 @@ if (fs.existsSync(envFile)) {
   });
 }
 
-const handler = require("../api/index.js");
+const handler = require("../lib/engine.js");
 
 const app = express();
 app.use(express.json());
