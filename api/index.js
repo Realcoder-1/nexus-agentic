@@ -219,7 +219,27 @@ function json(res, status, payload) {
 }
 
 function routePath(req) {
+  const queryPath = req.query && (req.query.__path || req.query.path);
+  if (Array.isArray(queryPath) && queryPath.length) {
+    return (`/api/${queryPath.filter(Boolean).join("/")}`).replace(/\/+$/, "") || "/api";
+  }
+  if (typeof queryPath === "string" && queryPath.length) {
+    const value = queryPath.startsWith("/") ? queryPath : `/api/${queryPath}`;
+    return value.replace(/\/+$/, "") || "/api";
+  }
+  const invoke = req.headers && (req.headers["x-invoke-path"] || req.headers["x-matched-path"]);
+  if (typeof invoke === "string" && invoke.includes("/api")) {
+    const clipped = invoke.startsWith("/api") ? invoke : invoke.slice(invoke.indexOf("/api"));
+    return clipped.split("?")[0].replace(/\/+$/, "") || "/api";
+  }
   const raw = (req.url || "").split("?")[0];
+  if (raw && raw !== "/" && raw !== "/api") return raw.replace(/\/+$/, "") || "/api";
+  try {
+    const search = new URL(req.url || "", "http://n.local").searchParams.get("__path");
+    if (search) return search.replace(/\/+$/, "") || "/api";
+  } catch {
+    /* ignore malformed urls */
+  }
   return raw.replace(/\/+$/, "") || "/";
 }
 
