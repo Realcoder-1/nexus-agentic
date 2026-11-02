@@ -234,8 +234,26 @@ function publicWallet(wallet) {
   };
 }
 
+function companySnapshot() {
+  const seed = seedCatalog();
+  return Object.values(seed).map((company) => {
+    const departments = Object.values(company.departments)
+      .map((dept) => wallets.get(dept.agentId))
+      .filter(Boolean)
+      .map(publicWallet)
+      .sort((a, b) => a.department.localeCompare(b.department));
+    const totalUSD = money(departments.reduce((sum, item) => sum + item.balanceUSD, 0));
+    return {
+      id: company.id,
+      name: company.name,
+      type: company.type,
+      totalUSD,
+      departments,
+    };
+  });
+}
+
 function handleCatalog() {
-  const tenants = seedCatalog();
   const pairs = {};
   Object.entries(PAIRS).forEach(([agentId, pair]) => {
     const payer = wallets.get(agentId);
@@ -252,9 +270,114 @@ function handleCatalog() {
   return {
     environment: "sandbox",
     taskSuccessPhrase: TASK_SUCCESS_PHRASE,
-    tenants,
+    tenants: seedCatalog(),
+    companies: companySnapshot(),
     wallets: Array.from(wallets.values()).map(publicWallet),
     pairs,
+  };
+}
+
+function login(body) {
+  const username = String(body.username || "").trim();
+  const password = String(body.password || "").trim();
+  if (!username || !password) {
+    return { status: 400, payload: { error: "Enter a user and a password." } };
+  }
+  return {
+    status: 200,
+    payload: {
+      ok: true,
+      username,
+      role: "treasury_admin",
+      demo: true,
+    },
+  };
+}
+
+function fundCompany(body) {
+  const tenantId = String(body.tenantId || "");
+  const action = body.action === "withdraw" ? "withdraw" : "add";
+  const amount = money(body.amountUSD);
+  if (!(amount > 0)) {
+    return { status: 400, payload: { error: "Enter an amount greater than zero." } };
+  }
+  const depts = Array.from(wallets.values()).filter((item) => item.tenantId === tenantId);
+  if (!depts.length) {
+    return { status: 404, payload: { error: "Unknown company." } };
+  }
+  const total = money(depts.reduce((sum, item) => sum + item.balanceUSD, 0));
+  if (action === "withdraw") {
+    if (amount > total) {
+      return { status: 403, payload: { error: "Not enough company balance." } };
+    }
+    let remaining = amount;
+    depts.forEach((item, index) => {
+      const share =
+        index === depts.length - 1 || total === 0
+          ? remaining
+          : money(amount * (item.balanceUSD / total));
+      item.balanceUSD = money(item.balanceUSD - share);
+      remaining = money(remaining - share);
+    });
+  } else {
+    const base = money(amount / depts.length);
+    let given = 0;
+    depts.forEach((item, index) => {
+      const share = index === depts.length - 1 ? money(amount - given) : base;
+      item.balanceUSD = money(item.balanceUSD + share);
+      given = money(given + share);
+    });
+  }
+  return { status: 200, payload: handleCatalog() };
+}
+
+function spendOnce(body) {
+  const payer = wallets.get(String(body.agentId || ""));
+  if (!payer) return { status: 404, payload: { error: "Unknown department." } };
+  const pair = PAIRS[payer.agentId] || PAIRS.acme_engineering;
+  const payee = wallets.get(pair.counterparty);
+  const amount = money(Math.min(pair.amountUSD, payer.spendingLimitUSD, payer.balanceUSD));
+  if (!(amount > 0)) {
+    return {
+      status: 200,
+      payload: {
+        idle: true,
+        log: payer.department + " is waiting for funds.",
+        wallet: publicWallet(payer),
+        receiverWallet: payee ? publicWallet(payee) : null,
+        companies: companySnapshot(),
+      },
+    };
+  }
+  const result = authorize({
+    agentId: payer.agentId,
+    targetMerchant: pair.merchant,
+    transactionAmount: amount,
+    executionLog:
+      payer.department +
+      " paid " +
+      pair.merchant +
+      " $" +
+      usd(amount) +
+      " to " +
+      pair.memo +
+      ". " +
+      TASK_SUCCESS_PHRASE,
+    creditAgentId: payee ? payee.agentId : "",
+  });
+  const settled = result.status === 200;
+  return {
+    status: 200,
+    payload: {
+      idle: !settled,
+      log: settled
+        ? payer.department + " spent $" + usd(amount) + " at " + pair.merchant + " · " + pair.memo
+        : payer.department + " held funds · " + (result.payload.reason || "blocked"),
+      settlement: result.payload,
+      wallet: publicWallet(wallets.get(payer.agentId)),
+      receiverWallet: payee ? publicWallet(wallets.get(payee.agentId)) : null,
+      companies: companySnapshot(),
+    },
   };
 }
 
@@ -492,6 +615,21 @@ module.exports = async (req, res) => {
 
   if (req.method === "GET" && path === "/api/catalog") {
     return json(res, 200, handleCatalog());
+  }
+
+  if (req.method === "POST" && (path === "/api/auth/login" || path === "/api/login")) {
+    const result = login(await readBody(req));
+    return json(res, result.status, result.payload);
+  }
+
+  if (req.method === "POST" && (path === "/api/company/fund" || path === "/api/wallets/fund")) {
+    const result = fundCompany(await readBody(req));
+    return json(res, result.status, result.payload);
+  }
+
+  if (req.method === "POST" && (path === "/api/ledger/spend" || path === "/api/agent/spend")) {
+    const result = spendOnce(await readBody(req));
+    return json(res, result.status, result.payload);
   }
 
   if (req.method === "POST" && path === "/api/wallets/create") {

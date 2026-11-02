@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus Agentic — Programmatic wallets for autonomous AI agents</title>
-  <meta name="description" content="Department agents hold Nexus wallets. A payment only moves if the merchant is allowed, the amount is under the ceiling, and the log says the task finished." />
+  <title>Nexus Agentic — Treasury</title>
+  <meta name="description" content="Demo treasury for programmatic agent wallets." />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,248 +24,122 @@
   </script>
   <style>
     body { background: #000; color: #fafafa; }
-    .grid-fade {
-      background-image:
-        linear-gradient(rgba(52, 211, 153, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(52, 211, 153, 0.06) 1px, transparent 1px);
-      background-size: 48px 48px;
-    }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
-    select, input { color-scheme: dark; }
+    input, textarea { color-scheme: dark; }
+    .screen { display: none; }
+    .screen.on { display: block; }
   </style>
 </head>
 <body class="min-h-screen font-sans antialiased">
-  <header class="sticky top-0 z-20 border-b border-zinc-900/80 bg-black/80 backdrop-blur">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+  <header class="border-b border-zinc-900">
+    <div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
       <div class="flex items-center gap-3">
-        <span class="h-2.5 w-2.5 rounded-full bg-em shadow-[0_0_12px_#34d399]"></span>
+        <span class="h-2.5 w-2.5 rounded-full bg-em"></span>
         <span class="text-sm font-extrabold uppercase tracking-[0.18em]">Nexus Agentic</span>
       </div>
-      <span class="rounded-full border border-emerald-900/70 bg-emerald-950/40 px-3 py-1 font-mono text-[10px] text-em">SANDBOX</span>
+      <div class="flex items-center gap-3 text-xs text-zinc-500">
+        <span id="who"></span>
+        <button id="signout" type="button" class="hidden text-zinc-400 hover:text-white">Sign out</button>
+      </div>
     </div>
   </header>
 
-  <section class="grid-fade border-b border-zinc-900">
-    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-      <p class="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-em">Wallets for software agents</p>
-      <h1 class="max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl">
-        Programmatic wallets for autonomous AI agents.
-      </h1>
-      <p class="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-        Pick a department. It pays its partner department on Nexus.
-        If the amount is over the ceiling, the sender log says no — and the receiver never gets the money.
-      </p>
-    </div>
-  </section>
+  <main class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <section id="login" class="screen on">
+      <p class="font-mono text-[11px] uppercase tracking-[0.2em] text-em">Treasury access</p>
+      <h1 class="mt-2 text-3xl font-extrabold tracking-tight">Sign in to your company stack</h1>
+      <p class="mt-3 text-sm text-zinc-400">This is a product walkthrough, not a real identity check. Any user and password will open the sandbox.</p>
+      <form id="login-form" class="mt-8 space-y-4 rounded-2xl border border-zinc-900 bg-zinc-950 p-6">
+        <label class="block">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-zinc-500">User</span>
+          <input id="username" name="username" autocomplete="username" class="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-sm" placeholder="sarang" />
+        </label>
+        <label class="block">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Password</span>
+          <input id="password" name="password" type="password" autocomplete="current-password" class="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-sm" placeholder="••••••••" />
+        </label>
+        <p id="login-error" class="hidden text-sm text-red-400"></p>
+        <button type="submit" class="w-full rounded-lg bg-em py-3 text-xs font-extrabold uppercase tracking-widest text-black hover:bg-emerald-300">Continue</button>
+      </form>
+    </section>
 
-  <section id="engine" class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-    <div class="mb-6">
-      <h2 class="text-xl font-extrabold tracking-tight sm:text-2xl">Watch a payment</h2>
-      <p class="mt-1 text-sm text-zinc-400">Sender on the left. Receiver on the right. Same event, two wallets.</p>
-    </div>
+    <section id="portfolio" class="screen">
+      <p class="font-mono text-[11px] uppercase tracking-[0.2em] text-em">Portfolio</p>
+      <h1 class="mt-2 text-3xl font-extrabold tracking-tight">Companies</h1>
+      <p class="mt-2 text-sm text-zinc-400">You allocate cash. Department agents spend it on their own. Nexus is the rail, not the control room.</p>
+      <details id="company-drawer" class="mt-8 rounded-2xl border border-zinc-900 bg-zinc-950" open>
+        <summary class="cursor-pointer list-none px-5 py-4 text-sm font-bold">
+          Companies
+          <span class="ml-2 font-mono text-xs font-normal text-zinc-500" id="portfolio-total"></span>
+        </summary>
+        <div id="company-list" class="border-t border-zinc-900"></div>
+      </details>
+    </section>
 
-    <div class="mb-4">
-      <p class="mb-2 text-[11px] font-bold uppercase tracking-widest text-zinc-500">Who is paying?</p>
-      <div id="agent-grid" class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"></div>
-    </div>
-
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div class="flex flex-wrap items-end gap-3">
+    <section id="company" class="screen">
+      <button type="button" data-back="portfolio" class="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white">Back to companies</button>
+      <p id="co-name" class="mt-4 text-3xl font-extrabold tracking-tight">Acme</p>
+      <p class="mt-1 text-xs uppercase tracking-widest text-zinc-500">Company wallet</p>
+      <p id="co-total" class="mt-2 font-mono text-4xl font-bold text-em">—</p>
+      <form id="fund-form" class="mt-6 flex flex-wrap items-end gap-2">
         <label class="block">
           <span class="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Amount ($)</span>
-          <input id="amount" type="number" step="0.01" min="0" class="mt-1 w-32 rounded-lg border border-zinc-800 bg-zinc-900 p-2.5 font-mono text-sm" />
+          <input id="fund-amount" type="number" min="0" step="0.01" value="500" class="mt-1 w-36 rounded-lg border border-zinc-800 bg-zinc-900 p-2.5 font-mono text-sm" />
         </label>
-        <button id="within" type="button" class="rounded-lg border border-zinc-800 px-3 py-2.5 text-xs font-bold text-zinc-200 hover:border-emerald-800">Within limit</button>
-        <button id="overspend" type="button" class="rounded-lg border border-zinc-800 px-3 py-2.5 text-xs font-bold text-zinc-200 hover:border-red-800">Overspend</button>
-      </div>
-      <div class="flex gap-2">
-        <button id="run" type="button" class="rounded-lg bg-em px-5 py-2.5 text-xs font-extrabold uppercase tracking-widest text-black hover:bg-emerald-300 disabled:opacity-50">Run payment</button>
-        <button id="reset" type="button" class="rounded-lg border border-zinc-800 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-300 hover:bg-zinc-900">Reset</button>
-      </div>
-    </div>
+        <button name="action" value="add" class="rounded-lg bg-em px-4 py-2.5 text-xs font-extrabold uppercase tracking-widest text-black">Add</button>
+        <button name="action" value="withdraw" class="rounded-lg border border-zinc-800 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-200">Withdraw</button>
+      </form>
+      <p id="fund-error" class="mt-2 hidden text-sm text-red-400"></p>
+      <h2 class="mt-10 text-sm font-bold uppercase tracking-widest text-zinc-500">Departments</h2>
+      <ol id="dept-list" class="mt-3 divide-y divide-zinc-900 overflow-hidden rounded-2xl border border-zinc-900"></ol>
+    </section>
 
-    <div class="mb-4 grid gap-4 md:grid-cols-2">
-      <article id="card-sender" class="rounded-2xl border border-emerald-900/50 bg-zinc-950 p-4">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-em">Sender</p>
-        <p id="send-dept" class="mt-1 text-lg font-extrabold">Engineering</p>
-        <p id="send-co" class="text-xs text-zinc-500">Acme</p>
-        <p id="send-bal" class="mt-3 font-mono text-3xl font-bold text-em">—</p>
-        <p id="send-ceil" class="mt-1 font-mono text-xs text-zinc-500">Ceiling —</p>
-      </article>
-      <article id="card-receiver" class="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Receiver</p>
-        <p id="recv-dept" class="mt-1 text-lg font-extrabold">Customs</p>
-        <p id="recv-co" class="text-xs text-zinc-500">Logistics</p>
-        <p id="recv-bal" class="mt-3 font-mono text-3xl font-bold text-white">—</p>
-        <p id="recv-ceil" class="mt-1 font-mono text-xs text-zinc-500">Ceiling —</p>
-      </article>
-    </div>
-
-    <div class="overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950">
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-900 px-4 py-3">
-        <p id="pair-title" class="font-mono text-[11px] uppercase tracking-widest text-zinc-500">Engineering → Customs</p>
-        <div class="flex rounded-lg border border-zinc-800 p-0.5 text-[11px] font-bold">
-          <button type="button" data-view="both" class="view-btn rounded-md bg-zinc-800 px-3 py-1.5 text-white">Both logs</button>
-          <button type="button" data-view="payer" class="view-btn rounded-md px-3 py-1.5 text-zinc-400">Sender</button>
-          <button type="button" data-view="receiver" class="view-btn rounded-md px-3 py-1.5 text-zinc-400">Receiver</button>
+    <section id="department" class="screen">
+      <button type="button" data-back="company" class="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white">Back to company</button>
+      <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p id="dept-name" class="text-2xl font-extrabold">Engineering</p>
+          <p id="dept-meta" class="mt-1 text-sm text-zinc-500">Live spend rail</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] uppercase tracking-widest text-zinc-500">Allocated balance</p>
+          <p id="dept-bal" class="font-mono text-2xl font-bold text-em">—</p>
         </div>
       </div>
-      <div id="stream" class="flex min-h-[280px] max-h-[420px] flex-col gap-3 overflow-y-auto bg-black/40 p-5"></div>
-      <div id="result" class="hidden border-t border-zinc-900 px-5 py-4 font-mono text-xs"></div>
-    </div>
-  </section>
-
-  <section id="api" class="border-t border-zinc-900">
-    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <h2 class="text-xl font-extrabold tracking-tight">Same rules on the API</h2>
-      <p class="mt-2 max-w-2xl text-sm text-zinc-400">The console is only a client. Clearance still needs an allowed merchant, a ceiling check, and <span class="font-mono text-zinc-200">SUCCESS: Task completed</span> in the log.</p>
-      <div class="mt-6 grid gap-4 md:grid-cols-2">
-        <pre class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-950 p-4 font-mono text-[11px] leading-relaxed text-zinc-300">POST /api/wallets/create
-{
-  "agentId": "acme_research",
-  "balanceUSD": 250,
-  "spendingLimitUSD": 25,
-  "allowedMerchants": ["openai.com"]
-}</pre>
-        <pre class="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-950 p-4 font-mono text-[11px] leading-relaxed text-zinc-300">POST /api/transactions/authorize
-{
-  "agentId": "acme_engineering",
-  "targetMerchant": "flexport.com",
-  "transactionAmount": 42,
-  "executionLog": "SUCCESS: Task completed",
-  "creditAgentId": "log_customs"
-}</pre>
-      </div>
-    </div>
-  </section>
-
-  <footer class="border-t border-zinc-900">
-    <div class="mx-auto max-w-6xl px-4 py-6 text-[11px] text-zinc-600 sm:px-6">
-      © 2026 Nexus Agentic · Sandbox demo, not a licensed money transmitter. Balances reset on serverless cold start.
-    </div>
-  </footer>
+      <p class="mt-6 text-[11px] font-bold uppercase tracking-widest text-zinc-500">Spend log</p>
+      <div id="stream" class="mt-3 min-h-[240px] rounded-2xl border border-zinc-900 bg-black/50 p-4 font-mono text-xs leading-6 text-zinc-300"></div>
+    </section>
+  </main>
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    let catalog = null;
-    let runToken = 0;
-    let currentAgent = "acme_engineering";
-    let view = "both";
-    let messages = [];
+    const state = {
+      catalog: null,
+      user: sessionStorage.getItem("nexus_user") || "",
+      companyId: "",
+      agentId: "",
+      spendTimer: null,
+    };
 
     function money(n) {
       return Number(n).toLocaleString("en-US", { style: "currency", currency: "USD" });
     }
 
+    function show(name) {
+      document.querySelectorAll(".screen").forEach((el) => el.classList.toggle("on", el.id === name));
+    }
+
+    function companyById(id) {
+      return (state.catalog.companies || []).find((item) => item.id === id);
+    }
+
     function pairOf(agentId) {
-      return catalog.pairs[agentId];
+      return state.catalog.pairs[agentId];
     }
 
     function walletOf(agentId) {
-      return (catalog.wallets || []).find((item) => item.agentId === agentId);
-    }
-
-    function paintWallets(sender, receiver) {
-      if (sender) {
-        $("send-dept").textContent = sender.department;
-        $("send-co").textContent = sender.tenantName;
-        $("send-bal").textContent = money(sender.balanceUSD);
-        $("send-ceil").textContent = "Ceiling " + money(sender.spendingLimitUSD) + " · " + sender.allowedMerchants.join(", ");
-      }
-      if (receiver) {
-        $("recv-dept").textContent = receiver.department;
-        $("recv-co").textContent = receiver.tenantName;
-        $("recv-bal").textContent = money(receiver.balanceUSD);
-        $("recv-ceil").textContent = "Ceiling " + money(receiver.spendingLimitUSD) + " · " + receiver.allowedMerchants.join(", ");
-      }
-    }
-
-    function paintPair() {
-      const pair = pairOf(currentAgent);
-      const sender = walletOf(currentAgent);
-      const receiver = walletOf(pair.counterparty);
-      $("pair-title").textContent = sender.department + "  →  " + pair.counterpartyDepartment;
-      paintWallets(sender, receiver);
-      document.querySelectorAll("[data-agent]").forEach((btn) => {
-        const on = btn.getAttribute("data-agent") === currentAgent;
-        btn.className =
-          "rounded-lg border px-3 py-2 text-left text-sm font-semibold " +
-          (on ? "border-emerald-700 bg-emerald-950/40 text-white" : "border-zinc-800 bg-zinc-950 text-zinc-300 hover:border-zinc-600");
-      });
-    }
-
-    function fillAgents() {
-      const grid = $("agent-grid");
-      grid.replaceChildren();
-      Object.values(catalog.tenants).forEach((tenant) => {
-        Object.values(tenant.departments).forEach((dept) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.setAttribute("data-agent", dept.agentId);
-          btn.innerHTML =
-            '<span class="block text-[10px] uppercase tracking-widest text-zinc-500">' + tenant.name + "</span>" +
-            '<span class="block">' + dept.label + "</span>";
-          btn.addEventListener("click", () => {
-            currentAgent = dept.agentId;
-            setWithin();
-            paintPair();
-            clearStream();
-          });
-          grid.append(btn);
-        });
-      });
-    }
-
-    function setWithin() {
-      const pair = pairOf(currentAgent);
-      $("amount").value = Number(pair.amountUSD).toFixed(2);
-    }
-
-    function setOverspend() {
-      const sender = walletOf(currentAgent);
-      $("amount").value = (Number(sender.spendingLimitUSD) + 10).toFixed(2);
-    }
-
-    function clearStream() {
-      messages = [];
-      $("stream").replaceChildren();
-      $("result").classList.add("hidden");
-      $("result").textContent = "";
-    }
-
-    function renderStream() {
-      const stream = $("stream");
-      stream.replaceChildren();
-      messages
-        .filter((msg) => view === "both" || msg.role === view)
-        .forEach((message) => {
-          const row = document.createElement("div");
-          const fromSender = message.role === "payer";
-          row.className = fromSender ? "flex justify-start" : "flex justify-end";
-          const bubble = document.createElement("div");
-          bubble.className =
-            "max-w-[85%] rounded-xl border px-3 py-2 " +
-            (fromSender ? "border-emerald-900/70 bg-emerald-950/30" : "border-zinc-800 bg-zinc-900");
-          const who = document.createElement("div");
-          who.className = "font-mono text-[10px] uppercase tracking-widest text-zinc-500";
-          who.textContent = (fromSender ? "Sender · " : "Receiver · ") + message.speaker;
-          const body = document.createElement("p");
-          body.className = "mt-1 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200";
-          body.textContent = message.text;
-          bubble.append(who, body);
-          row.append(bubble);
-          stream.append(row);
-        });
-      stream.scrollTop = stream.scrollHeight;
-    }
-
-    function showResult(text, ok) {
-      $("result").classList.remove("hidden");
-      $("result").className =
-        "border-t border-zinc-900 px-5 py-4 font-mono text-xs " + (ok ? "text-em" : "text-red-400");
-      $("result").textContent = text;
+      return (state.catalog.wallets || []).find((item) => item.agentId === agentId);
     }
 
     async function post(path, body) {
@@ -278,95 +152,176 @@
       return { res, data };
     }
 
-    function applyWallets(sender, receiver) {
-      if (sender) {
-        const idx = catalog.wallets.findIndex((item) => item.agentId === sender.agentId);
-        if (idx >= 0) catalog.wallets[idx] = sender;
-      }
-      if (receiver) {
-        const idx = catalog.wallets.findIndex((item) => item.agentId === receiver.agentId);
-        if (idx >= 0) catalog.wallets[idx] = receiver;
-      }
-      paintWallets(sender, receiver);
+    function applyCatalog(payload) {
+      if (!payload) return;
+      if (payload.companies) state.catalog.companies = payload.companies;
+      if (payload.wallets) state.catalog.wallets = payload.wallets;
+      if (payload.pairs) state.catalog.pairs = payload.pairs;
     }
 
-    function setView(next) {
-      view = next;
-      document.querySelectorAll(".view-btn").forEach((btn) => {
-        const on = btn.getAttribute("data-view") === view;
-        btn.className =
-          "view-btn rounded-md px-3 py-1.5 " + (on ? "bg-zinc-800 text-white" : "text-zinc-400");
+    function renderPortfolio() {
+      const list = $("company-list");
+      list.replaceChildren();
+      const total = (state.catalog.companies || []).reduce((sum, item) => sum + item.totalUSD, 0);
+      $("portfolio-total").textContent = money(total) + " total";
+      (state.catalog.companies || []).forEach((company) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "flex w-full items-center justify-between px-5 py-4 text-left hover:bg-zinc-900";
+        btn.innerHTML =
+          '<span><span class="block font-semibold">' + company.name + '</span>' +
+          '<span class="block text-xs text-zinc-500">' + company.type + " · " + company.departments.length + " departments</span></span>" +
+          '<span class="font-mono text-sm text-em">' + money(company.totalUSD) + "</span>";
+        btn.addEventListener("click", () => openCompany(company.id));
+        list.append(btn);
       });
-      $("card-sender").className =
-        "rounded-2xl border bg-zinc-950 p-4 " + (view === "receiver" ? "border-zinc-800" : "border-emerald-900/50");
-      $("card-receiver").className =
-        "rounded-2xl border bg-zinc-950 p-4 " + (view === "payer" ? "border-zinc-800" : "border-emerald-900/50");
-      renderStream();
+    }
+
+    function renderCompany() {
+      const company = companyById(state.companyId);
+      if (!company) return;
+      $("co-name").textContent = company.name;
+      $("co-total").textContent = money(company.totalUSD);
+      const list = $("dept-list");
+      list.replaceChildren();
+      company.departments.forEach((dept, index) => {
+        const item = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "flex w-full items-center justify-between px-5 py-4 text-left hover:bg-zinc-900";
+        btn.innerHTML =
+          '<span class="flex items-baseline gap-3"><span class="font-mono text-xs text-zinc-600">' +
+          String(index + 1).padStart(2, "0") +
+          '</span><span class="font-semibold">' + dept.department + "</span></span>" +
+          '<span class="font-mono text-sm">' + money(dept.balanceUSD) + "</span>";
+        btn.addEventListener("click", () => openDepartment(dept.agentId));
+        item.append(btn);
+        list.append(item);
+      });
+    }
+
+    function paintDeptWallets() {
+      const sender = walletOf(state.agentId);
+      const pair = pairOf(state.agentId);
+      $("dept-name").textContent = sender.department;
+      $("dept-meta").textContent =
+        pair.merchant + " · ceiling " + money(sender.spendingLimitUSD);
+      $("dept-bal").textContent = money(sender.balanceUSD);
+    }
+
+    function openCompany(id) {
+      state.companyId = id;
+      renderCompany();
+      show("company");
+    }
+
+    function stopSpend() {
+      if (state.spendTimer) {
+        clearInterval(state.spendTimer);
+        state.spendTimer = null;
+      }
+    }
+
+    function addLog(text, idle) {
+      const line = document.createElement("div");
+      line.className = idle ? "text-zinc-600" : "text-em";
+      line.textContent = new Date().toLocaleTimeString() + "  " + text;
+      $("stream").prepend(line);
+    }
+
+    async function tickSpend() {
+      const { res, data } = await post("/api/ledger/spend", { agentId: state.agentId });
+      if (!res.ok) return;
+      applyCatalog(data);
+      if (data.wallet) {
+        const idx = state.catalog.wallets.findIndex((item) => item.agentId === data.wallet.agentId);
+        if (idx >= 0) state.catalog.wallets[idx] = data.wallet;
+      }
+      paintDeptWallets();
+      addLog(data.log, data.idle);
+    }
+
+    function openDepartment(agentId) {
+      state.agentId = agentId;
+      $("stream").replaceChildren();
+      paintDeptWallets();
+      show("department");
+      stopSpend();
+      tickSpend();
+      state.spendTimer = setInterval(tickSpend, 1800);
     }
 
     async function boot() {
       const res = await fetch("/api/catalog");
-      catalog = await res.json();
-      fillAgents();
-      setWithin();
-      paintPair();
-    }
-
-    async function run() {
-      const token = ++runToken;
-      const amount = parseFloat($("amount").value);
-      $("run").disabled = true;
-      clearStream();
-      try {
-        const started = await post("/api/dialogue/start", { agentId: currentAgent, amountUSD: amount });
-        if (token !== runToken) return;
-        applyWallets(started.data.wallet, started.data.receiverWallet);
-        $("pair-title").textContent = started.data.department + "  →  " + started.data.counterpartyDepartment;
-        const total = started.data.total || 4;
-        let step = null;
-        for (let i = 0; i < total; i += 1) {
-          await wait(550);
-          if (token !== runToken) return;
-          step = await post("/api/dialogue/next", { agentId: currentAgent, step: i, amountUSD: amount });
-          if (token !== runToken) return;
-          if (step.data.message) {
-            messages.push(step.data.message);
-            renderStream();
-          }
-          applyWallets(step.data.wallet, step.data.receiverWallet);
-        }
-        const settlement = (step && step.data.settlement) || {};
-        if (settlement.status === "APPROVED_AND_SETTLED") {
-          showResult(
-            "Paid " + money(settlement.transactionAmount) + " · " + settlement.transactionId +
-              " · sender −" + money(settlement.transactionAmount) +
-              " · receiver +" + money(settlement.transactionAmount),
-            true
-          );
-        } else {
-          showResult(settlement.reason || "Not paid", false);
-        }
-      } catch (err) {
-        if (token === runToken) showResult(err.message, false);
-      } finally {
-        if (token === runToken) $("run").disabled = false;
+      state.catalog = await res.json();
+      if (state.user) {
+        $("who").textContent = state.user;
+        $("signout").classList.remove("hidden");
+        renderPortfolio();
+        show("portfolio");
       }
     }
 
-    async function reset() {
-      const { data } = await post("/api/demo/reset");
-      catalog.wallets = data.wallets || [];
-      paintPair();
-      clearStream();
-    }
-
-    $("within").addEventListener("click", setWithin);
-    $("overspend").addEventListener("click", setOverspend);
-    $("run").addEventListener("click", run);
-    $("reset").addEventListener("click", reset);
-    document.querySelectorAll(".view-btn").forEach((btn) => {
-      btn.addEventListener("click", () => setView(btn.getAttribute("data-view")));
+    $("login-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      $("login-error").classList.add("hidden");
+      const { res, data } = await post("/api/auth/login", {
+        username: $("username").value,
+        password: $("password").value,
+      });
+      if (!res.ok) {
+        $("login-error").textContent = data.error || "Could not continue.";
+        $("login-error").classList.remove("hidden");
+        return;
+      }
+      state.user = data.username;
+      sessionStorage.setItem("nexus_user", data.username);
+      $("who").textContent = data.username;
+      $("signout").classList.remove("hidden");
+      renderPortfolio();
+      show("portfolio");
     });
+
+    $("signout").addEventListener("click", () => {
+      stopSpend();
+      sessionStorage.removeItem("nexus_user");
+      state.user = "";
+      $("who").textContent = "";
+      $("signout").classList.add("hidden");
+      show("login");
+    });
+
+    $("fund-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      $("fund-error").classList.add("hidden");
+      const action = event.submitter && event.submitter.value;
+      const { res, data } = await post("/api/company/fund", {
+        tenantId: state.companyId,
+        action,
+        amountUSD: parseFloat($("fund-amount").value),
+      });
+      if (!res.ok) {
+        $("fund-error").textContent = data.error || "Could not update the wallet.";
+        $("fund-error").classList.remove("hidden");
+        return;
+      }
+      applyCatalog(data);
+      renderCompany();
+    });
+
+    document.querySelectorAll("[data-back]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        stopSpend();
+        if (btn.getAttribute("data-back") === "portfolio") {
+          renderPortfolio();
+          show("portfolio");
+        } else {
+          renderCompany();
+          show("company");
+        }
+      });
+    });
+
     boot();
   </script>
 </body>
