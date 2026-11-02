@@ -18,67 +18,43 @@ function seedCatalog() {
   return {
     acme_ai: {
       id: "acme_ai",
-      name: "Acme AI Corp",
-      type: "Venture-funded AI lab",
+      name: "Acme",
+      type: "AI lab",
       departments: {
-        engineering: {
-          key: "engineering",
-          label: "DevOps Automation",
-          agentId: "acme_devops_01",
-          balanceUSD: 8500,
-          spendingLimitUSD: 50,
-          allowedMerchants: ["github.com", "vercel.com", "openai.com", "flexport.com"],
-          successLog:
-            "[INFO] Auditing container deployment pipelines.\n[STATUS] Production instance cleared.\n[STATUS] SUCCESS: Task completed. Script compilation verified.",
-          failLog:
-            "[INFO] Querying server cluster statuses.\n[ERROR] Authentication key missing from environment.\n[STATUS] FAILED: Target deployment pipeline terminated.",
-        },
-        marketing: {
-          key: "marketing",
-          label: "Growth Automation",
-          agentId: "acme_growth_03",
-          balanceUSD: 24000,
-          spendingLimitUSD: 300,
-          allowedMerchants: ["google.com", "meta.com"],
-          successLog:
-            "[INFO] Parsing performance marketing conversion matrices.\n[PROCESS] Campaign configuration update processed.\n[STATUS] SUCCESS: Task completed. Spend constraints checked out.",
-          failLog:
-            "[INFO] Attempting data asset compilation run.\n[CRITICAL] Metric pipeline timeout exception thrown.\n[STATUS] FAILED: Execution loop aborted.",
-        },
+        engineering: dept("acme_engineering", "Engineering", 8500, 50, ["flexport.com", "github.com", "vercel.com"]),
+        marketing: dept("acme_marketing", "Marketing", 24000, 300, ["meta.com", "google.com"]),
+        research: dept("acme_research", "Research", 1200, 25, ["openai.com"]),
       },
     },
     global_logistics: {
       id: "global_logistics",
-      name: "Global Logistics Ltd",
-      type: "High-volume supply chain",
+      name: "Logistics",
+      type: "Supply chain",
       departments: {
-        shipping: {
-          key: "shipping",
-          label: "Freight Customs",
-          agentId: "log_customs_04",
-          balanceUSD: 145000,
-          spendingLimitUSD: 5000,
-          allowedMerchants: ["flexport.com", "fedex.com"],
-          successLog:
-            "[INFO] Reviewing customs tracking manifest schemas.\n[STATUS] Verification token validated against registry.\n[STATUS] SUCCESS: Task completed. Customs tracking clearance verified.",
-          failLog:
-            "[INFO] Polling port manifest verification loops.\n[ERROR] Inbound ledger record mismatch identified.\n[STATUS] FAILED: Security authentication check failed.",
-        },
-        dispatch: {
-          key: "dispatch",
-          label: "Last-Mile Dispatch",
-          agentId: "log_routing_09",
-          balanceUSD: 1800,
-          spendingLimitUSD: 120,
-          allowedMerchants: ["mapbox.com", "twilio.com"],
-          successLog:
-            "[INFO] Fetching spatial cluster coordinates for active fleets.\n[PROCESS] Dynamic routing configuration updated.\n[STATUS] SUCCESS: Task completed. Geo-fencing profiles locked.",
-          failLog:
-            "[INFO] Triggering fleet broadcast notification strings.\n[CRITICAL] Network cell handoff timed out.\n[STATUS] FAILED: API pipeline unavailable.",
-        },
+        customs: dept("log_customs", "Customs", 145000, 5000, ["fedex.com", "flexport.com"]),
+        dispatch: dept("log_dispatch", "Dispatch", 1800, 120, ["twilio.com", "mapbox.com"]),
+        warehouse: dept("log_warehouse", "Warehouse", 4200, 40, ["mapbox.com", "openai.com"]),
       },
     },
   };
+}
+
+function dept(agentId, label, balanceUSD, spendingLimitUSD, allowedMerchants) {
+  return { key: label.toLowerCase(), label, agentId, balanceUSD, spendingLimitUSD, allowedMerchants };
+}
+
+/** Who pays whom, and for what. Amounts sit under the payer ceiling unless the UI sends an overspend. */
+const PAIRS = {
+  acme_engineering: pair("log_customs", "flexport.com", 42, "clear a shipment", "inv_ship_1"),
+  acme_marketing: pair("log_dispatch", "meta.com", 180, "buy delivery ads", "inv_ads_1"),
+  acme_research: pair("log_warehouse", "openai.com", 18, "run a model job", "inv_model_1"),
+  log_customs: pair("acme_engineering", "fedex.com", 640, "print a shipping label", "inv_label_1"),
+  log_dispatch: pair("acme_marketing", "twilio.com", 28, "send delivery texts", "inv_sms_1"),
+  log_warehouse: pair("acme_research", "mapbox.com", 35, "find stock on a map", "inv_map_1"),
+};
+
+function pair(counterparty, merchant, amountUSD, memo, invoiceId) {
+  return { counterparty, merchant, amountUSD, memo, invoiceId };
 }
 
 /** In-process ledger. Demo only — resets on serverless cold start. */
@@ -87,94 +63,71 @@ const ledger = [];
 const sessions = new Map();
 const invoices = [];
 
-/**
- * Four department wallets on the shared Nexus rail.
- * Each payer talks to an agent at the other company. Lines are static.
- */
-const SCENES = {
-  acme_devops_01: scene({
-    agentId: "acme_devops_01",
-    department: "DevOps Automation",
-    companyId: "acme_ai",
-    company: "Acme AI Corp",
-    counterparty: "log_customs_04",
-    counterpartyCompany: "Global Logistics Ltd",
-    liveLine: "Clearing manifest M-1042 with customs",
-    invoice: { id: "inv_M1042", merchant: "flexport.com", amountUSD: 42, memo: "customs clearance manifest M-1042" },
-    ceiling: "50.00",
-    lines: [
-      ["payer", "Intent [FREIGHT_MANIFEST_CLEARANCE]. Clear manifest M-1042 and bill flexport.com. This Nexus wallet can spend up to $50.00."],
-      ["counterparty", "Manifest M-1042 is ready to clear through flexport.com. Ask and I will issue the invoice on Nexus."],
-      ["payer", "Issue the invoice."],
-      ["counterparty", "INVOICE inv_M1042 | merchant: flexport.com | amount: 42.00 | memo: customs clearance manifest M-1042"],
-      ["payer", "Invoice inv_M1042 stored. Merchant flexport.com is on this wallet's whitelist. Amount $42.00 is under the $50.00 ceiling. SUCCESS: Task completed"],
-    ],
-  }),
-  acme_growth_03: scene({
-    agentId: "acme_growth_03",
-    department: "Growth Automation",
-    companyId: "acme_ai",
-    company: "Acme AI Corp",
-    counterparty: "log_routing_09",
-    counterpartyCompany: "Global Logistics Ltd",
-    liveLine: "Buying the lane campaign on meta.com",
-    invoice: { id: "inv_LANE18", merchant: "meta.com", amountUSD: 180, memo: "last-mile lane acquisition" },
-    ceiling: "300.00",
-    lines: [
-      ["payer", "Intent [LANE_ACQUISITION]. Dispatch asked for a last-mile campaign. Bill meta.com. Ceiling on this wallet is $300.00."],
-      ["counterparty", "Lane 18 is the one we need covered. Send the invoice request and I will price the flight."],
-      ["payer", "Issue the invoice."],
-      ["counterparty", "INVOICE inv_LANE18 | merchant: meta.com | amount: 180.00 | memo: last-mile lane acquisition"],
-      ["payer", "Invoice inv_LANE18 stored. Merchant meta.com is on this wallet's whitelist. Amount $180.00 is under the $300.00 ceiling. SUCCESS: Task completed"],
-    ],
-  }),
-  log_customs_04: scene({
-    agentId: "log_customs_04",
-    department: "Freight Customs",
-    companyId: "global_logistics",
-    company: "Global Logistics Ltd",
-    counterparty: "acme_devops_01",
-    counterpartyCompany: "Acme AI Corp",
-    liveLine: "Paying the FedEx bill of lading",
-    invoice: { id: "inv_BOL77", merchant: "fedex.com", amountUSD: 640, memo: "priority bill of lading" },
-    ceiling: "5000.00",
-    lines: [
-      ["payer", "Intent [BILL_OF_LADING]. The label hook is live. Bill fedex.com for the priority bill. Ceiling on this wallet is $5,000.00."],
-      ["counterparty", "Label hook is confirmed on our side. Ask and I will issue the FedEx invoice through Nexus."],
-      ["payer", "Issue the invoice."],
-      ["counterparty", "INVOICE inv_BOL77 | merchant: fedex.com | amount: 640.00 | memo: priority bill of lading"],
-      ["payer", "Invoice inv_BOL77 stored. Merchant fedex.com is on this wallet's whitelist. Amount $640.00 is under the $5,000.00 ceiling. SUCCESS: Task completed"],
-    ],
-  }),
-  log_routing_09: scene({
-    agentId: "log_routing_09",
-    department: "Last-Mile Dispatch",
-    companyId: "global_logistics",
-    company: "Global Logistics Ltd",
-    counterparty: "acme_growth_03",
-    counterpartyCompany: "Acme AI Corp",
-    liveLine: "Reloading dispatch map tiles",
-    invoice: { id: "inv_GEO09", merchant: "mapbox.com", amountUSD: 28, memo: "dispatch map tile reload" },
-    ceiling: "120.00",
-    lines: [
-      ["payer", "Intent [MAP_TILE_RELOAD]. Growth locked the delivery zones. Bill mapbox.com. Ceiling on this wallet is $120.00."],
-      ["counterparty", "Zones are locked. Ask and I will issue the map invoice on Nexus."],
-      ["payer", "Issue the invoice."],
-      ["counterparty", "INVOICE inv_GEO09 | merchant: mapbox.com | amount: 28.00 | memo: dispatch map tile reload"],
-      ["payer", "Invoice inv_GEO09 stored. Merchant mapbox.com is on this wallet's whitelist. Amount $28.00 is under the $120.00 ceiling. SUCCESS: Task completed"],
-    ],
-  }),
-};
+function usd(n) {
+  return Number(n).toFixed(2);
+}
 
-function scene(spec) {
+function buildExchange(payerId, amountUSD) {
+  const pair = PAIRS[payerId] || PAIRS.acme_engineering;
+  const payer = wallets.get(payerId) || wallets.get("acme_engineering");
+  const receiver = wallets.get(pair.counterparty);
+  const amount = money(amountUSD == null ? pair.amountUSD : amountUSD);
+  const allowed = payer.allowedMerchants.includes(pair.merchant);
+  const underCeiling = amount <= payer.spendingLimitUSD;
+  const solvent = amount <= payer.balanceUSD;
+
+  let stop = "";
+  if (!allowed) stop = `${pair.merchant} is not on ${payer.department}'s allowed list.`;
+  else if (!underCeiling) stop = `$${usd(amount)} is over the $${usd(payer.spendingLimitUSD)} ceiling.`;
+  else if (!solvent) stop = `${payer.department} does not have enough balance.`;
+
+  const ok = !stop;
+  const lines = [
+    {
+      role: "payer",
+      speaker: payer.department,
+      company: payer.tenantName,
+      agentId: payer.agentId,
+      text: `Need to ${pair.memo}. Pay ${pair.merchant} $${usd(amount)}. My ceiling is $${usd(payer.spendingLimitUSD)}.`,
+    },
+    {
+      role: "receiver",
+      speaker: receiver.department,
+      company: receiver.tenantName,
+      agentId: receiver.agentId,
+      text: `Invoice ${pair.invoiceId} for $${usd(amount)} is ready.`,
+    },
+    {
+      role: "payer",
+      speaker: payer.department,
+      company: payer.tenantName,
+      agentId: payer.agentId,
+      text: ok
+        ? `${pair.merchant} is allowed. Amount is under the ceiling. SUCCESS: Task completed`
+        : `${stop} I will not pay.`,
+    },
+    {
+      role: "receiver",
+      speaker: receiver.department,
+      company: receiver.tenantName,
+      agentId: receiver.agentId,
+      text: ok ? `Payment received from ${payer.department}.` : `No payment from ${payer.department}.`,
+    },
+  ];
+
   return {
-    ...spec,
-    lines: spec.lines.map(([role, text]) => ({
-      role,
-      speaker: role === "payer" ? spec.agentId : spec.counterparty,
-      company: role === "payer" ? spec.company : spec.counterpartyCompany,
-      text,
-    })),
+    agentId: payer.agentId,
+    department: payer.department,
+    company: payer.tenantName,
+    counterparty: receiver.agentId,
+    counterpartyDepartment: receiver.department,
+    counterpartyCompany: receiver.tenantName,
+    merchant: pair.merchant,
+    memo: pair.memo,
+    invoiceId: pair.invoiceId,
+    amountUSD: amount,
+    ok,
+    lines,
   };
 }
 
@@ -282,11 +235,26 @@ function publicWallet(wallet) {
 }
 
 function handleCatalog() {
+  const tenants = seedCatalog();
+  const pairs = {};
+  Object.entries(PAIRS).forEach(([agentId, pair]) => {
+    const payer = wallets.get(agentId);
+    const receiver = wallets.get(pair.counterparty);
+    pairs[agentId] = {
+      ...pair,
+      department: payer ? payer.department : agentId,
+      company: payer ? payer.tenantName : "",
+      ceilingUSD: payer ? payer.spendingLimitUSD : 0,
+      counterpartyDepartment: receiver ? receiver.department : pair.counterparty,
+      counterpartyCompany: receiver ? receiver.tenantName : "",
+    };
+  });
   return {
     environment: "sandbox",
     taskSuccessPhrase: TASK_SUCCESS_PHRASE,
-    tenants: seedCatalog(),
+    tenants,
     wallets: Array.from(wallets.values()).map(publicWallet),
+    pairs,
   };
 }
 
@@ -387,6 +355,13 @@ function authorize(body) {
   }
 
   wallet.balanceUSD = money(wallet.balanceUSD - transactionAmount);
+  let counterpartyWallet = null;
+  const creditId = String(body.creditAgentId || "").trim();
+  if (creditId && creditId !== agentId && wallets.has(creditId)) {
+    const payee = wallets.get(creditId);
+    payee.balanceUSD = money(payee.balanceUSD + transactionAmount);
+    counterpartyWallet = publicWallet(payee);
+  }
   const transaction = {
     transactionId: `tx_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     agentId,
@@ -404,70 +379,66 @@ function authorize(body) {
       status: "APPROVED_AND_SETTLED",
       ...transaction,
       wallet: publicWallet(wallet),
+      counterpartyWallet,
     },
   };
 }
 
-function sceneFor(agentId) {
-  return SCENES[String(agentId || "")] || null;
-}
-
-function otherAgents(agentId) {
-  return Object.values(SCENES)
-    .filter((item) => item.agentId !== agentId)
-    .map((item) => ({
-      agentId: item.agentId,
-      department: item.department,
-      company: item.company,
-      counterparty: item.counterparty,
-      liveLine: item.liveLine,
-    }));
+function sessionPayload(exchange) {
+  return {
+    agentId: exchange.agentId,
+    department: exchange.department,
+    company: exchange.company,
+    counterparty: exchange.counterparty,
+    counterpartyDepartment: exchange.counterpartyDepartment,
+    counterpartyCompany: exchange.counterpartyCompany,
+    merchant: exchange.merchant,
+    memo: exchange.memo,
+    amountUSD: exchange.amountUSD,
+    total: exchange.lines.length,
+    willClear: exchange.ok,
+    wallet: publicWallet(wallets.get(exchange.agentId)),
+    receiverWallet: publicWallet(wallets.get(exchange.counterparty)),
+  };
 }
 
 function startDialogue(body) {
-  const scene = sceneFor(body && body.agentId) || SCENES.acme_devops_01;
-  const wallet = wallets.get(scene.agentId);
-  return {
-    status: 201,
-    payload: {
-      agentId: scene.agentId,
-      department: scene.department,
-      company: scene.company,
-      counterparty: scene.counterparty,
-      counterpartyCompany: scene.counterpartyCompany,
-      total: scene.lines.length,
-      wallet: wallet ? publicWallet(wallet) : null,
-      others: otherAgents(scene.agentId),
-    },
-  };
+  const agentId = String((body && body.agentId) || "acme_engineering");
+  const exchange = buildExchange(agentId, body && body.amountUSD);
+  sessions.set(agentId, exchange);
+  return { status: 201, payload: sessionPayload(exchange) };
 }
 
-function settleDialogue(scene, message, stepNumber) {
+function settleDialogue(exchange, message, stepNumber) {
   const payload = {
     done: true,
     step: stepNumber,
-    total: scene.lines.length,
+    total: exchange.lines.length,
     message,
+    wallet: publicWallet(wallets.get(exchange.agentId)),
+    receiverWallet: publicWallet(wallets.get(exchange.counterparty)),
   };
-  const wallet = wallets.get(scene.agentId);
-  const balanceBefore = wallet ? wallet.balanceUSD : null;
-  const executionLog = scene.lines.map((line) => `${line.speaker}: ${line.text}`).join("\n");
+  const executionLog = exchange.lines.map((line) => `${line.speaker}: ${line.text}`).join("\n");
   const result = authorize({
-    agentId: scene.agentId,
-    targetMerchant: scene.invoice.merchant,
-    transactionAmount: scene.invoice.amountUSD,
+    agentId: exchange.agentId,
+    targetMerchant: exchange.merchant,
+    transactionAmount: exchange.amountUSD,
     executionLog,
+    creditAgentId: exchange.counterparty,
   });
 
-  payload.balanceBefore = balanceBefore;
   payload.settlement = result.payload;
-  payload.wallet = result.payload.wallet || (wallet ? publicWallet(wallet) : null);
+  payload.wallet = result.payload.wallet || payload.wallet;
+  payload.receiverWallet = result.payload.counterpartyWallet || payload.receiverWallet;
 
   if (result.status === 200) {
     const stored = {
-      ...scene.invoice,
-      fromAgent: scene.counterparty,
-      toAgent: scene.agentId,
+      id: exchange.invoiceId,
+      merchant: exchange.merchant,
+      amountUSD: exchange.amountUSD,
+      memo: exchange.memo,
+      fromAgent: exchange.agentId,
+      toAgent: exchange.counterparty,
       storedAt: result.payload.timestamp,
       transactionId: result.payload.transactionId,
     };
@@ -475,26 +446,34 @@ function settleDialogue(scene, message, stepNumber) {
     payload.invoice = stored;
   }
 
-  return { status: result.status, payload };
+  return { status: result.status === 200 || !exchange.ok ? 200 : result.status, payload };
 }
 
 function nextDialogue(body) {
-  const scene = sceneFor(body && body.agentId) || SCENES.acme_devops_01;
+  const agentId = String((body && body.agentId) || "acme_engineering");
+  const exchange = sessions.get(agentId) || buildExchange(agentId, body && body.amountUSD);
   const step = Number(body && body.step);
-  if (!Number.isInteger(step) || step < 0 || step >= scene.lines.length) {
+  if (!Number.isInteger(step) || step < 0 || step >= exchange.lines.length) {
     return { status: 400, payload: { status: "DECLINED", reason: "Dialogue step is out of range." } };
   }
 
-  const message = scene.lines[step];
-  const done = step === scene.lines.length - 1;
+  const message = exchange.lines[step];
+  const done = step === exchange.lines.length - 1;
   if (!done) {
     return {
       status: 200,
-      payload: { done: false, step: step + 1, total: scene.lines.length, message },
+      payload: {
+        done: false,
+        step: step + 1,
+        total: exchange.lines.length,
+        message,
+        wallet: publicWallet(wallets.get(exchange.agentId)),
+        receiverWallet: publicWallet(wallets.get(exchange.counterparty)),
+      },
     };
   }
 
-  return settleDialogue(scene, message, step + 1);
+  return settleDialogue(exchange, message, step + 1);
 }
 
 module.exports = async (req, res) => {
