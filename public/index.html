@@ -184,30 +184,69 @@
       show("company");
     }
 
-    async function boot() {
-      const res = await fetch("/api/catalog");
-      state.catalog = await res.json();
-      if (state.user) {
-        $("who").textContent = state.user;
-        $("signout").classList.remove("hidden");
-        renderPortfolio();
-        show("portfolio");
-      }
+    function boot() {
+      if (!state.user) return;
+      enter();
     }
 
-    $("login-form").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const name = $("username").value.trim() || "Acme";
+    function enter() {
+      const name = ($("username").value || "Acme").trim() || "Acme";
       state.user = name;
       sessionStorage.setItem("nexus_user", name);
       $("who").textContent = name;
       $("signout").classList.remove("hidden");
-      if (!state.catalog) {
-        const res = await fetch("/api/catalog");
-        state.catalog = await res.json();
-      }
+      if (!state.catalog) state.catalog = fallbackCatalog();
       renderPortfolio();
       show("portfolio");
+      loadCatalog();
+    }
+
+    function fallbackCatalog() {
+      return {
+        companies: [
+          {
+            id: "acme_ai",
+            name: "Acme",
+            type: "AI lab",
+            totalUSD: 33700,
+            departments: [
+              { agentId: "acme_engineering", department: "Engineering", balanceUSD: 8500 },
+              { agentId: "acme_marketing", department: "Marketing", balanceUSD: 24000 },
+              { agentId: "acme_research", department: "Research", balanceUSD: 1200 },
+            ],
+          },
+          {
+            id: "global_logistics",
+            name: "Logistics",
+            type: "Supply chain",
+            totalUSD: 151000,
+            departments: [
+              { agentId: "log_customs", department: "Customs", balanceUSD: 145000 },
+              { agentId: "log_dispatch", department: "Dispatch", balanceUSD: 1800 },
+              { agentId: "log_warehouse", department: "Warehouse", balanceUSD: 4200 },
+            ],
+          },
+        ],
+      };
+    }
+
+    async function loadCatalog() {
+      try {
+        const res = await fetch("/api/catalog");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.companies) return;
+        state.catalog = data;
+        if (document.getElementById("portfolio").classList.contains("on")) renderPortfolio();
+        if (document.getElementById("company").classList.contains("on")) renderCompany();
+      } catch (err) {
+        /* The portfolio is already open. */
+      }
+    }
+
+    $("login-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      enter();
     });
 
     $("signout").addEventListener("click", () => {
